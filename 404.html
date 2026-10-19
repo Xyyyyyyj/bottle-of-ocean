@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="在 16×16 灯板上点色、改色、熄灭。颜色来自 Pindo MARD 全色板 377 色。" />
+    <meta name="theme-color" content="#14343a" />
+    <title>Bottle of Ocean</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@500;600&family=Sora:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="waves" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <main class="app">
+      <header class="brand">
+        <h1>Bottle of Ocean</h1>
+        <p>在 16×16 灯板上点色、改色、熄灭。颜色来自 Pindo MARD 全色板 377 色。</p>
+      </header>
+
+      <section class="stage">
+        <div class="bottle-scene">
+          <div class="bottle" id="bottle">
+            <canvas id="led" width="320" height="320" aria-label="16乘16灯板预览"></canvas>
+          </div>
+        </div>
+        <div class="compass">
+          <div class="compass-dial" aria-hidden="true">
+            <div class="compass-needle" id="needle"></div>
+          </div>
+          <div>
+            <div id="angleLabel">倾斜 −90°</div>
+            <div class="meta" id="particleLabel">— 粒子</div>
+            <div class="meta" id="gridLabel">16×16</div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>调节</h2>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" aria-selected="true" data-tab="motion">运动</button>
+          <button type="button" role="tab" aria-selected="false" data-tab="look">外观</button>
+          <button type="button" role="tab" aria-selected="false" data-tab="fluid">流体</button>
+        </div>
+
+        <div class="tab-pane active" id="pane-motion" role="tabpanel">
+          <label class="field">
+            <span class="field-head">倾斜 <strong id="v-tilt">−90°</strong></span>
+            <input id="tilt" type="range" min="-180" max="180" step="1" value="-90" />
+          </label>
+          <label class="field">
+            <span class="field-head">转速 <strong id="v-rspeed">45°/s</strong></span>
+            <input id="rspeed" type="range" min="10" max="180" step="1" value="45" />
+          </label>
+          <label class="field">
+            <span class="field-head">帧率 <strong id="v-fps">30</strong></span>
+            <input id="fps" type="range" min="10" max="60" step="1" value="30" />
+          </label>
+          <label class="field">
+            <span class="field-head">水量 <strong id="v-fill">0.60</strong></span>
+            <input id="fill" type="range" min="0.2" max="1.4" step="0.01" value="0.6" />
+          </label>
+        </div>
+
+        <div class="tab-pane" id="pane-look" role="tabpanel">
+          <label class="field">
+            <span class="field-head">蓝色日变 <strong id="v-blue">180</strong></span>
+            <input id="blue" type="range" min="0" max="255" step="1" value="180" />
+          </label>
+          <label class="field">
+            <span class="field-head">水色 R <strong id="v-cr">40</strong></span>
+            <input id="cr" type="range" min="0" max="255" step="1" value="40" />
+          </label>
+          <label class="field">
+            <span class="field-head">水色 G <strong id="v-cg">200</strong></span>
+            <input id="cg" type="range" min="0" max="255" step="1" value="200" />
+          </label>
+          <label class="field">
+            <span class="field-head">水色 B <strong id="v-cb">230</strong></span>
+            <input id="cb" type="range" min="0" max="255" step="1" value="230" />
+          </label>
+          <div class="swatch" id="swatch"></div>
+        </div>
+
+        <div class="tab-pane" id="pane-fluid" role="tabpanel">
+          <label class="field">
+            <span class="field-head">密度钳位 <strong id="v-clamp">1.20</strong></span>
+            <input id="clamp" type="range" min="0.6" max="2.5" step="0.01" value="1.2" />
+          </label>
+          <label class="field">
+            <span class="field-head">Gamma <strong id="v-gamma">0.60</strong></span>
+            <input id="gamma" type="range" min="0.3" max="1.5" step="0.01" value="0.6" />
+          </label>
+          <label class="field">
+            <span class="field-head">重力 <strong id="v-grav">9.81</strong></span>
+            <input id="grav" type="range" min="2" max="20" step="0.01" value="9.81" />
+          </label>
+          <label class="field">
+            <span class="field-head">压力迭代 <strong id="v-press">10</strong></span>
+            <input id="press" type="range" min="4" max="30" step="1" value="10" />
+          </label>
+          <label class="field">
+            <span class="field-head">FLIP <strong id="v-flip">0.90</strong></span>
+            <input id="flip" type="range" min="0" max="1" step="0.01" value="0.9" />
+          </label>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="btnRotate">旋转瓶子</button>
+          <button type="button" class="btn btn-ghost" id="btnReset">重置水面</button>
+          <button type="button" class="btn btn-ghost" id="btnUndoBead">撤销</button>
+          <button type="button" class="btn btn-ghost" id="btnClearBead">清空格子</button>
+          <label class="field">
+            <span class="field-head">图案名称</span>
+            <input id="patternName" type="text" maxlength="24" placeholder="例如 小鱼、爱心" />
+          </label>
+          <div class="edit-row">
+            <button type="button" class="btn btn-primary" id="btnSavePattern">保存图案</button>
+            <button type="button" class="btn btn-ghost" id="btnSaveAsPattern">另存为</button>
+            <button type="button" class="btn btn-ghost" id="btnNewPattern">新建</button>
+          </div>
+          <div class="pattern-library">
+            <div class="board-title">已保存图案（点选切换）</div>
+            <div class="pattern-list" id="patternList"></div>
+          </div>
+        </div>
+        <p class="hint" id="beadStatus">选颜色后：点一次上色，再点同一格熄灭。</p>
+        <div class="paint-dock">
+          <ol class="paint-steps" id="paintSteps">
+            <li><b>点色</b>：选颜色 → 点一次上色，再点同一格熄灭；拖动可连续画/擦</li>
+            <li><b>改色</b>：选新颜色 → 点已有色块整块替换，或用「替换全部」</li>
+            <li><b>熄灭</b>：专门擦除；「熄灭当前色」关掉整色</li>
+          </ol>
+          <div class="paint-tools">
+            <button type="button" id="toolPaint" class="is-on">1 点色</button>
+            <button type="button" id="toolRecolor">2 改色</button>
+            <button type="button" id="toolErase">3 熄灭</button>
+            <button type="button" id="btnExtinguishColor">熄灭当前色</button>
+          </div>
+          <div class="paint-current">
+            当前颜色
+            <i id="paintSwatch" class="paint-swatch" aria-hidden="true"></i>
+            <strong id="paintLabel">A5</strong>
+            <span class="paint-count" id="paletteCount">Pindo MARD 377 色</span>
+          </div>
+          <div class="board-title">16×16 点色板（在这里操作）</div>
+          <canvas id="beadBoard" width="288" height="288" aria-label="16乘16点色板"></canvas>
+          <p class="paint-help" id="paintHelp">当前：点色。选颜色后点一次上色，再点同一格熄灭；拖动能连续画/擦。</p>
+          <label class="field">
+            <span class="field-head">选择颜色（Pindo 377 色）</span>
+            <input id="colorSearch" type="search" placeholder="搜索色号，如 R10、H7、ZG20" />
+          </label>
+          <div class="series-tabs" id="seriesTabs"></div>
+          <div class="color-picker is-all" id="colorPicker"></div>
+          <div class="recolor-bar">
+            <span>改色快捷：把已用色</span>
+            <select id="replaceFrom" aria-label="要替换的已用色"></select>
+            <span>全部换成当前颜色</span>
+            <button type="button" class="btn btn-ghost" id="btnReplaceAll">替换全部</button>
+          </div>
+        </div>
+        <div class="bead-legend-head" id="beadLegendHead">
+          <span>已用颜色</span>
+          <button type="button" class="bead-all" id="btnBeadAll" hidden>显示全部</button>
+        </div>
+        <div class="bead-legend" id="beadLegend"></div>
+        <div class="bead-layers" id="beadLayers"></div>
+        <div class="bead-map-block" id="beadOverlayWrap" hidden>
+          <div class="bead-map-title">当前叠加</div>
+          <pre class="bead-map" id="beadOverlay"></pre>
+        </div>
+        <div class="bead-map-block" id="beadCombinedWrap">
+          <div class="bead-map-title">合成字母表</div>
+          <pre class="bead-map" id="beadMap"></pre>
+        </div>
+        <p class="hint">空格：旋转　← →：微调倾斜　1 2 3：切换页</p>
+      </aside>
+    </main>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
